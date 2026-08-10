@@ -1,41 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
 type HealthResponse = {
   status: string
   database: string
 }
 
+async function getHealth(): Promise<HealthResponse> {
+  const response = await fetch('/api/health')
+  if (!response.ok) throw new Error(`HTTP ${response.status}`)
+  return response.json() as Promise<HealthResponse>
+}
+
 function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let active = true
-
-    const checkHealth = () => {
-      fetch('/api/health')
-        .then((response) => {
-          if (!response.ok) throw new Error(`HTTP ${response.status}`)
-          return response.json() as Promise<HealthResponse>
-        })
-        .then((response) => {
-          if (!active) return
-          setHealth(response)
-          setError(null)
-        })
-        .catch((reason: unknown) => {
-          if (!active) return
-          setHealth(null)
-          setError(reason instanceof Error ? reason.message : 'Unknown error')
-        })
-    }
-
-    checkHealth()
-
-    return () => {
-      active = false
-    }
-  }, [])
+  const { data: health, error } = useQuery({
+    queryKey: ['health'],
+    queryFn: getHealth,
+  })
 
   return (
     <main>
@@ -50,7 +30,7 @@ function App() {
           {health
             ? `API ${health.status} · database ${health.database}`
             : error
-              ? `API unavailable · ${error}`
+              ? `API unavailable · ${error.message}`
               : 'Checking API…'}
         </div>
       </section>
