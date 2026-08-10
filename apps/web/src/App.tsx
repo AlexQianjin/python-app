@@ -1,39 +1,130 @@
-import { useQuery } from '@tanstack/react-query'
-
-type HealthResponse = {
-  status: string
-  database: string
-}
-
-async function getHealth(): Promise<HealthResponse> {
-  const response = await fetch('/api/health')
-  if (!response.ok) throw new Error(`HTTP ${response.status}`)
-  return response.json() as Promise<HealthResponse>
-}
+import { useCallback, useState, type FormEvent } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  createProduct,
+  deleteProduct,
+  getProducts,
+  updateProduct,
+  type Product,
+  type ProductInput,
+} from './api'
+import { ProductForm } from './ProductForm'
+import { ProductTable } from './ProductTable'
 
 function App() {
-  const { data: health, error } = useQuery({
-    queryKey: ['health'],
-    queryFn: getHealth,
+  const queryClient = useQueryClient()
+  const [page, setPage] = useState(1)
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
+  const [formOpen, setFormOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+
+  const query = useQuery({
+    queryKey: ['products', page, search],
+    queryFn: () => getProducts(page, search),
+    placeholderData: (previous) => previous,
   })
 
+  const saveMutation = useMutation({
+    mutationFn: (input: ProductInput) => selectedProduct
+      ? updateProduct(selectedProduct.id, input)
+      : createProduct(input),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['products'] }),
+        queryClient.invalidateQueries({ queryKey: ['product-summary'] }),
+      ])
+      setFormOpen(false)
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['products'] }),
+        queryClient.invalidateQueries({ queryKey: ['product-summary'] }),
+      ])
+    },
+  })
+
+  const openCreate = () => {
+    saveMutation.reset()
+    setSelectedProduct(null)
+    setFormOpen(true)
+  }
+  const openEdit = useCallback((product: Product) => {
+    saveMutation.reset()
+    setSelectedProduct(product)
+    setFormOpen(true)
+  }, [saveMutation])
+  const remove = useCallback((product: Product) => {
+    if (window.confirm(`Delete “${product.name}”? This cannot be undone.`)) {
+      deleteMutation.mutate(product.id)
+    }
+  }, [deleteMutation])
+
+  function submitSearch(event: FormEvent) {
+    event.preventDefault()
+    setPage(1)
+    setSearch(searchInput.trim())
+  }
+
+  const data = query.data
   return (
-    <main>
-      <section className="card">
-        <p className="eyebrow">pnpm monorepo</p>
-        <h1>React + FastAPI</h1>
-        <p className="intro">
-          A TypeScript web app backed by Python and PostgreSQL.
-        </p>
-        <div className="status" aria-live="polite">
-          <span className={`dot ${health ? 'online' : ''}`} />
-          {health
-            ? `API ${health.status} · database ${health.database}`
-            : error
-              ? `API unavailable · ${error.message}`
-              : 'Checking API…'}
+    <main className="page-content products-page">
+      <header className="page-header">
+        <div>
+          <p className="eyebrow">Inventory</p>
+          <h1>Products</h1>
+          <p className="intro">Manage your product catalog, pricing, and availability.</p>
         </div>
+        <button className="button primary" type="button" onClick={openCreate}>+ Add product</button>
+      </header>
+
+      <section className="catalog-card">
+        <div className="toolbar">
+          <form className="search" role="search" onSubmit={submitSearch}>
+            <span aria-hidden="true">⌕</span>
+            <input aria-label="Search products" placeholder="Search name, SKU, or category" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
+            <button type="submit">Search</button>
+          </form>
+          <p><strong>{data?.total.toLocaleString() ?? '—'}</strong> products</p>
+        </div>
+
+        {query.isError ? (
+          <div className="state-panel error-state">
+            <strong>Couldn’t load products</strong>
+            <span>{query.error.message}</span>
+            <button className="button secondary" type="button" onClick={() => query.refetch()}>Try again</button>
+          </div>
+        ) : !data ? (
+          <div className="state-panel">Loading products…</div>
+        ) : data.items.length === 0 ? (
+          <div className="state-panel">No products match your search.</div>
+        ) : (
+          <ProductTable products={data.items} onEdit={openEdit} onDelete={remove} />
+        )}
+
+        <footer className="pagination">
+          <span>Page <strong>{data?.page ?? page}</strong> of <strong>{data?.pages || 1}</strong> · 100 per page</span>
+          <div>
+            <button type="button" disabled={page <= 1 || query.isFetching} onClick={() => setPage((value) => value - 1)}>← Previous</button>
+            <button type="button" disabled={!data || page >= data.pages || query.isFetching} onClick={() => setPage((value) => value + 1)}>Next →</button>
+          </div>
+        </footer>
       </section>
+
+      {deleteMutation.isError && <div className="toast" role="alert">{deleteMutation.error.message}</div>}
+      {formOpen && (
+        <ProductForm
+          product={selectedProduct}
+          isSaving={saveMutation.isPending}
+          error={saveMutation.error?.message ?? null}
+          onClose={() => setFormOpen(false)}
+          onSubmit={(input) => saveMutation.mutate(input)}
+        />
+      )}
     </main>
   )
 }
