@@ -216,3 +216,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# JavaScript monorepo
+node_modules/
+.pnpm-store/
+.vite/
+.DS_Store
+
+# Local tool caches and environments
+.uv-cache/
+.venv/
+.env.*
+!.env.example

@@ -1,0 +1,15 @@
+{
+  "name": "python-app",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.13.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter web --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api dev",
+    "build": "pnpm --filter web build",
+    "lint": "pnpm --filter web lint && pnpm --filter api lint",
+    "typecheck": "pnpm --filter web typecheck",
+    "test": "pnpm --filter api test"
+  }
+}
