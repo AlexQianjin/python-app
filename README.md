@@ -26,6 +26,10 @@ docker compose up -d postgres
 cd apps/api && python3 -m uv sync && cd ../..
 ```
 
+Set a private Better Auth secret in `apps/api/.env` (at least 32 characters).
+The API app starts both FastAPI and the Better Auth gateway, and automatically
+creates the Better Auth tables in the existing PostgreSQL database.
+
 ## Development
 
 Run both applications from the repository root:
@@ -37,6 +41,11 @@ pnpm dev
 The web app is available at <http://localhost:5173>. The API is available at
 <http://localhost:8000>, with interactive documentation at
 <http://localhost:8000/docs>.
+
+Open the web app and create an account with email and password. Better Auth keeps
+the browser session in a secure cookie and issues short-lived JWTs for calls to
+FastAPI. All product routes require a valid authenticated user; health endpoints
+remain public.
 
 On the first API startup, the database tables are created and an empty catalog is
 seeded with 1,000 deterministic mock products. The Products screen loads 100

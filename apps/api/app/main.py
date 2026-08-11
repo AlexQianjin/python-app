@@ -10,6 +10,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import AuthenticatedUser, CurrentUser
 from app.config import settings
 from app.database import async_session_factory, engine, get_session
 from app.models import Base
@@ -46,6 +47,11 @@ app.include_router(products_router)
 class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
     database: Literal["connected", "unavailable"]
+
+
+@app.get("/api/me", response_model=CurrentUser, tags=["auth"])
+async def me(user: AuthenticatedUser) -> CurrentUser:
+    return user
 
 
 @app.get("/api/health", response_model=HealthResponse, tags=["system"])

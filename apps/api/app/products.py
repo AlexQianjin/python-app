@@ -6,6 +6,7 @@ from sqlalchemy import case, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import require_user
 from app.database import get_session
 from app.models import Product
 from app.schemas import (
@@ -17,7 +18,11 @@ from app.schemas import (
     ProductUpdate,
 )
 
-router = APIRouter(prefix="/api/products", tags=["products"])
+router = APIRouter(
+    prefix="/api/products",
+    tags=["products"],
+    dependencies=[Depends(require_user)],
+)
 Session = Annotated[AsyncSession, Depends(get_session)]
 LOW_STOCK_THRESHOLD = 25
 

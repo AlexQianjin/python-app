@@ -36,10 +36,16 @@ export type ProductSummary = {
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
+  const token = await getApiToken()
   const response = await fetch(url, {
     ...init,
-    headers: init?.body ? { 'Content-Type': 'application/json', ...init.headers } : init?.headers,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      ...init?.headers,
+    },
   })
+  if (response.status === 401) clearApiToken()
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as { detail?: string } | null
     throw new Error(payload?.detail ?? `Request failed (${response.status})`)
@@ -68,3 +74,4 @@ export function updateProduct(id: number, input: ProductInput): Promise<Product>
 export function deleteProduct(id: number): Promise<void> {
   return request(`/api/products/${id}`, { method: 'DELETE' })
 }
+import { clearApiToken, getApiToken } from './auth-client'

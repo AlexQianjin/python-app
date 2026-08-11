@@ -1,6 +1,36 @@
 import { Link, Outlet } from '@tanstack/react-router'
+import { AuthPage } from './AuthPage'
+import { authClient, clearApiToken } from './auth-client'
 
 export function AppLayout() {
+  const { data: session, isPending, error, refetch } = authClient.useSession()
+
+  if (isPending) {
+    return <main className="auth-page"><div className="auth-loading">Checking your session…</div></main>
+  }
+
+  if (!session) {
+    return (
+      <>
+        {error && <div className="toast">{error.message}</div>}
+        <AuthPage onAuthenticated={refetch} />
+      </>
+    )
+  }
+
+  const initials = session.user.name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+
+  async function signOut() {
+    await authClient.signOut()
+    clearApiToken()
+    await refetch()
+  }
+
   return (
     <div className="app-frame">
       <aside className="sidebar">
@@ -17,8 +47,9 @@ export function AppLayout() {
           </Link>
         </nav>
         <div className="sidebar-footer">
-          <span className="user-avatar" aria-hidden="true">AQ</span>
-          <div><strong>Alex Quinn</strong><span>Administrator</span></div>
+          <span className="user-avatar" aria-hidden="true">{initials}</span>
+          <div><strong>{session.user.name}</strong><span>{session.user.email}</span></div>
+          <button className="sign-out" type="button" onClick={signOut} aria-label="Sign out">↪</button>
         </div>
       </aside>
       <div className="main-column">
@@ -27,6 +58,7 @@ export function AppLayout() {
           <nav aria-label="Mobile navigation">
             <Link to="/" activeOptions={{ exact: true }} activeProps={{ className: 'active' }}>Dashboard</Link>
             <Link to="/products" activeProps={{ className: 'active' }}>Products</Link>
+            <button className="mobile-sign-out" type="button" onClick={signOut}>Sign out</button>
           </nav>
         </div>
         <Outlet />
