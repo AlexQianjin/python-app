@@ -1,3 +1,5 @@
+import { clearApiToken, getApiToken } from '../../auth'
+
 export type Product = {
   id: number
   sku: string
@@ -74,4 +76,3 @@ export function updateProduct(id: number, input: ProductInput): Promise<Product>
 export function deleteProduct(id: number): Promise<void> {
   return request(`/api/products/${id}`, { method: 'DELETE' })
 }
-import { clearApiToken, getApiToken } from './auth-client'

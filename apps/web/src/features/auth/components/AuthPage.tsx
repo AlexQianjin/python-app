@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react'
-import { authClient, clearApiToken } from './auth-client'
+import { authClient, clearApiToken } from '../api/auth-client'
 
 type AuthMode = 'sign-in' | 'sign-up'
 
@@ -16,9 +16,10 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: () => Promise<v
     setError(null)
     setIsSubmitting(true)
 
-    const result = mode === 'sign-up'
-      ? await authClient.signUp.email({ name, email, password })
-      : await authClient.signIn.email({ email, password })
+    const result =
+      mode === 'sign-up'
+        ? await authClient.signUp.email({ name, email, password })
+        : await authClient.signIn.email({ email, password })
 
     if (result.error) {
       setError(result.error.message ?? 'Authentication failed')
@@ -32,7 +33,7 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: () => Promise<v
   }
 
   function switchMode() {
-    setMode((current) => current === 'sign-in' ? 'sign-up' : 'sign-in')
+    setMode((current) => (current === 'sign-in' ? 'sign-up' : 'sign-in'))
     setError(null)
   }
 
@@ -40,7 +41,9 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: () => Promise<v
     <main className="auth-page">
       <section className="auth-card" aria-labelledby="auth-title">
         <div className="auth-brand">
-          <span className="brand-mark" aria-hidden="true">A</span>
+          <span className="brand-mark" aria-hidden="true">
+            A
+          </span>
           <span>Atlas</span>
         </div>
         <p className="eyebrow">Inventory workspace</p>
@@ -84,7 +87,11 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: () => Promise<v
             />
             {mode === 'sign-up' && <small>Use at least 8 characters.</small>}
           </label>
-          {error && <p className="auth-error" role="alert">{error}</p>}
+          {error && (
+            <p className="auth-error" role="alert">
+              {error}
+            </p>
+          )}
           <button className="button primary auth-submit" disabled={isSubmitting}>
             {isSubmitting ? 'Please wait…' : mode === 'sign-in' ? 'Sign in' : 'Create account'}
           </button>

@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { createColumnHelper, tableFeatures, useTable } from '@tanstack/react-table'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import type { Product } from './api'
+import type { Product } from '../api/products-api'
 
 const features = tableFeatures({})
 const columnHelper = createColumnHelper<typeof features, Product>()
@@ -13,40 +13,59 @@ type ProductTableProps = {
 }
 
 export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) {
-  const columns = useMemo(() => columnHelper.columns([
-    columnHelper.accessor('sku', { header: 'SKU' }),
-    columnHelper.accessor('name', {
-      header: 'Product',
-      cell: (info) => (
-        <div className="product-cell">
-          <strong>{info.getValue()}</strong>
-          <span>{info.row.original.category}</span>
-        </div>
-      ),
-    }),
-    columnHelper.accessor('price', {
-      header: 'Price',
-      cell: (info) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(info.getValue())),
-    }),
-    columnHelper.accessor('stock', {
-      header: 'Stock',
-      cell: (info) => info.getValue().toLocaleString(),
-    }),
-    columnHelper.accessor('is_active', {
-      header: 'Status',
-      cell: (info) => <span className={`badge ${info.getValue() ? 'active' : 'inactive'}`}>{info.getValue() ? 'Active' : 'Inactive'}</span>,
-    }),
-    columnHelper.display({
-      id: 'actions',
-      header: 'Actions',
-      cell: (info) => (
-        <div className="row-actions">
-          <button type="button" onClick={() => onEdit(info.row.original)}>Edit</button>
-          <button className="danger-link" type="button" onClick={() => onDelete(info.row.original)}>Delete</button>
-        </div>
-      ),
-    }),
-  ]), [onDelete, onEdit])
+  const columns = useMemo(
+    () =>
+      columnHelper.columns([
+        columnHelper.accessor('sku', { header: 'SKU' }),
+        columnHelper.accessor('name', {
+          header: 'Product',
+          cell: (info) => (
+            <div className="product-cell">
+              <strong>{info.getValue()}</strong>
+              <span>{info.row.original.category}</span>
+            </div>
+          ),
+        }),
+        columnHelper.accessor('price', {
+          header: 'Price',
+          cell: (info) =>
+            new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+              Number(info.getValue()),
+            ),
+        }),
+        columnHelper.accessor('stock', {
+          header: 'Stock',
+          cell: (info) => info.getValue().toLocaleString(),
+        }),
+        columnHelper.accessor('is_active', {
+          header: 'Status',
+          cell: (info) => (
+            <span className={`badge ${info.getValue() ? 'active' : 'inactive'}`}>
+              {info.getValue() ? 'Active' : 'Inactive'}
+            </span>
+          ),
+        }),
+        columnHelper.display({
+          id: 'actions',
+          header: 'Actions',
+          cell: (info) => (
+            <div className="row-actions">
+              <button type="button" onClick={() => onEdit(info.row.original)}>
+                Edit
+              </button>
+              <button
+                className="danger-link"
+                type="button"
+                onClick={() => onDelete(info.row.original)}
+              >
+                Delete
+              </button>
+            </div>
+          ),
+        }),
+      ]),
+    [onDelete, onEdit],
+  )
 
   const table = useTable({ features, columns, data: products })
   const rows = table.getRowModel().rows
@@ -89,7 +108,9 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                 style={{ transform: `translateY(${virtualRow.start}px)` }}
               >
                 {row.getAllCells().map((cell) => (
-                  <div role="cell" key={cell.id}><table.FlexRender cell={cell} /></div>
+                  <div role="cell" key={cell.id}>
+                    <table.FlexRender cell={cell} />
+                  </div>
                 ))}
               </div>
             )

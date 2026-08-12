@@ -7,11 +7,11 @@ import {
   updateProduct,
   type Product,
   type ProductInput,
-} from './api'
-import { ProductForm } from './ProductForm'
-import { ProductTable } from './ProductTable'
+} from '../api/products-api'
+import { ProductForm } from '../components/ProductForm'
+import { ProductTable } from '../components/ProductTable'
 
-function App() {
+export function ProductsPage() {
   const queryClient = useQueryClient()
   const [page, setPage] = useState(1)
   const [searchInput, setSearchInput] = useState('')
@@ -26,9 +26,8 @@ function App() {
   })
 
   const saveMutation = useMutation({
-    mutationFn: (input: ProductInput) => selectedProduct
-      ? updateProduct(selectedProduct.id, input)
-      : createProduct(input),
+    mutationFn: (input: ProductInput) =>
+      selectedProduct ? updateProduct(selectedProduct.id, input) : createProduct(input),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['products'] }),
@@ -53,16 +52,22 @@ function App() {
     setSelectedProduct(null)
     setFormOpen(true)
   }
-  const openEdit = useCallback((product: Product) => {
-    saveMutation.reset()
-    setSelectedProduct(product)
-    setFormOpen(true)
-  }, [saveMutation])
-  const remove = useCallback((product: Product) => {
-    if (window.confirm(`Delete “${product.name}”? This cannot be undone.`)) {
-      deleteMutation.mutate(product.id)
-    }
-  }, [deleteMutation])
+  const openEdit = useCallback(
+    (product: Product) => {
+      saveMutation.reset()
+      setSelectedProduct(product)
+      setFormOpen(true)
+    },
+    [saveMutation],
+  )
+  const remove = useCallback(
+    (product: Product) => {
+      if (window.confirm(`Delete “${product.name}”? This cannot be undone.`)) {
+        deleteMutation.mutate(product.id)
+      }
+    },
+    [deleteMutation],
+  )
 
   function submitSearch(event: FormEvent) {
     event.preventDefault()
@@ -79,24 +84,35 @@ function App() {
           <h1>Products</h1>
           <p className="intro">Manage your product catalog, pricing, and availability.</p>
         </div>
-        <button className="button primary" type="button" onClick={openCreate}>+ Add product</button>
+        <button className="button primary" type="button" onClick={openCreate}>
+          + Add product
+        </button>
       </header>
 
       <section className="catalog-card">
         <div className="toolbar">
           <form className="search" role="search" onSubmit={submitSearch}>
             <span aria-hidden="true">⌕</span>
-            <input aria-label="Search products" placeholder="Search name, SKU, or category" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
+            <input
+              aria-label="Search products"
+              placeholder="Search name, SKU, or category"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
             <button type="submit">Search</button>
           </form>
-          <p><strong>{data?.total.toLocaleString() ?? '—'}</strong> products</p>
+          <p>
+            <strong>{data?.total.toLocaleString() ?? '—'}</strong> products
+          </p>
         </div>
 
         {query.isError ? (
           <div className="state-panel error-state">
             <strong>Couldn’t load products</strong>
             <span>{query.error.message}</span>
-            <button className="button secondary" type="button" onClick={() => query.refetch()}>Try again</button>
+            <button className="button secondary" type="button" onClick={() => query.refetch()}>
+              Try again
+            </button>
           </div>
         ) : !data ? (
           <div className="state-panel">Loading products…</div>
@@ -107,15 +123,34 @@ function App() {
         )}
 
         <footer className="pagination">
-          <span>Page <strong>{data?.page ?? page}</strong> of <strong>{data?.pages || 1}</strong> · 100 per page</span>
+          <span>
+            Page <strong>{data?.page ?? page}</strong> of <strong>{data?.pages || 1}</strong> · 100
+            per page
+          </span>
           <div>
-            <button type="button" disabled={page <= 1 || query.isFetching} onClick={() => setPage((value) => value - 1)}>← Previous</button>
-            <button type="button" disabled={!data || page >= data.pages || query.isFetching} onClick={() => setPage((value) => value + 1)}>Next →</button>
+            <button
+              type="button"
+              disabled={page <= 1 || query.isFetching}
+              onClick={() => setPage((value) => value - 1)}
+            >
+              ← Previous
+            </button>
+            <button
+              type="button"
+              disabled={!data || page >= data.pages || query.isFetching}
+              onClick={() => setPage((value) => value + 1)}
+            >
+              Next →
+            </button>
           </div>
         </footer>
       </section>
 
-      {deleteMutation.isError && <div className="toast" role="alert">{deleteMutation.error.message}</div>}
+      {deleteMutation.isError && (
+        <div className="toast" role="alert">
+          {deleteMutation.error.message}
+        </div>
+      )}
       {formOpen && (
         <ProductForm
           product={selectedProduct}
@@ -128,5 +163,3 @@ function App() {
     </main>
   )
 }
-
-export default App
