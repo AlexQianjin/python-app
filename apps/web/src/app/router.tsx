@@ -1,10 +1,15 @@
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
+import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 import { AppLayout } from './AppLayout'
 import { DashboardPage } from '../features/dashboard'
 import { ProductsPage } from '../features/products'
 
 const rootRoute = createRootRoute({
-  component: AppLayout,
+  component: () => (
+    <NuqsAdapter>
+      <AppLayout />
+    </NuqsAdapter>
+  ),
   notFoundComponent: () => <main>Page not found</main>,
 })
 

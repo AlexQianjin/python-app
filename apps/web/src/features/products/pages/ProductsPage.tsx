@@ -1,5 +1,6 @@
-import { useCallback, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs'
 import {
   createProduct,
   deleteProduct,
@@ -13,11 +14,20 @@ import { ProductTable } from '../components/ProductTable'
 
 export function ProductsPage() {
   const queryClient = useQueryClient()
-  const [page, setPage] = useState(1)
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  const [{ page, search }, setProductQuery] = useQueryStates(
+    {
+      page: parseAsInteger.withDefault(1),
+      search: parseAsString.withDefault(''),
+    },
+    { history: 'push' },
+  )
+  const [searchInput, setSearchInput] = useState(search)
   const [formOpen, setFormOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+
+  useEffect(() => {
+    setSearchInput(search)
+  }, [search])
 
   const query = useQuery({
     queryKey: ['products', page, search],
@@ -71,8 +81,7 @@ export function ProductsPage() {
 
   function submitSearch(event: FormEvent) {
     event.preventDefault()
-    setPage(1)
-    setSearch(searchInput.trim())
+    void setProductQuery({ page: 1, search: searchInput.trim() })
   }
 
   const data = query.data
@@ -131,14 +140,14 @@ export function ProductsPage() {
             <button
               type="button"
               disabled={page <= 1 || query.isFetching}
-              onClick={() => setPage((value) => value - 1)}
+              onClick={() => setProductQuery({ page: page - 1 })}
             >
               ← Previous
             </button>
             <button
               type="button"
               disabled={!data || page >= data.pages || query.isFetching}
-              onClick={() => setPage((value) => value + 1)}
+              onClick={() => setProductQuery({ page: page + 1 })}
             >
               Next →
             </button>
