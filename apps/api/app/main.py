@@ -10,8 +10,7 @@ from app.api.router import router as api_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
-from app.db.base import Base
-from app.db.session import async_session_factory, engine
+from app.db.session import async_session_factory
 from app.modules.products.seed import seed_products
 
 logger = logging.getLogger(__name__)
@@ -20,8 +19,6 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     try:
-        async with engine.begin() as connection:
-            await connection.run_sync(Base.metadata.create_all)
         async with async_session_factory() as session:
             seeded = await seed_products(session)
             if seeded:

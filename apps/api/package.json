@@ -10,6 +10,8 @@
     "start": "concurrently -k -n fastapi,auth -c blue,magenta \"UV_CACHE_DIR=.uv-cache python3 -m uv run fastapi run app/main.py --host 0.0.0.0 --port 8000\" \"node --env-file-if-exists=.env --import tsx auth/server.ts\"",
     "start:fastapi": "UV_CACHE_DIR=.uv-cache python3 -m uv run fastapi run app/main.py --host 0.0.0.0 --port 8000",
     "start:auth": "node --env-file-if-exists=.env --import tsx auth/server.ts",
+    "db:migrate": "UV_CACHE_DIR=.uv-cache python3 -m uv run alembic upgrade head",
+    "db:revision": "UV_CACHE_DIR=.uv-cache python3 -m uv run alembic revision --autogenerate",
     "lint": "UV_CACHE_DIR=.uv-cache python3 -m uv run ruff check .",
     "format": "UV_CACHE_DIR=.uv-cache python3 -m uv run ruff format .",
     "test": "UV_CACHE_DIR=.uv-cache python3 -m uv run pytest"

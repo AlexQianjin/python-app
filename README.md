@@ -23,7 +23,7 @@ backed by PostgreSQL.
 pnpm install
 cp apps/api/.env.example apps/api/.env
 docker compose up -d postgres
-cd apps/api && python3 -m uv sync && cd ../..
+cd apps/api && python3 -m uv sync && python3 -m uv run alembic upgrade head && cd ../..
 ```
 
 Set a private Better Auth secret in `apps/api/.env` (at least 32 characters).
@@ -47,9 +47,21 @@ the browser session in a secure cookie and issues short-lived JWTs for calls to
 FastAPI. All product routes require a valid authenticated user; health endpoints
 remain public.
 
-On the first API startup, the database tables are created and an empty catalog is
-seeded with 1,000 deterministic mock products. The Products screen loads 100
-products per page and virtualizes the visible table rows.
+The Alembic migration creates the API database tables. On the first API startup,
+an empty catalog is seeded with 1,000 deterministic mock products. The Products
+screen loads 100 products per page and virtualizes the visible table rows.
+
+After changing a SQLAlchemy model, create and apply a migration from `apps/api`:
+
+```sh
+pnpm db:revision -- -m "describe the change"
+pnpm db:migrate
+```
+
+If an older development database already has the `products` table from the
+previous automatic setup, baseline it once with
+`python3 -m uv run alembic stamp 20260813_01` instead of applying the initial
+migration.
 
 Product CRUD endpoints are available at `/api/products`:
 
