@@ -12,6 +12,7 @@ from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
 from app.db.session import async_session_factory
 from app.modules.products.seed import seed_products
+from app.modules.users.seed import seed_users
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,9 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
             seeded = await seed_products(session)
             if seeded:
                 logger.info("Seeded %s products", seeded)
+            seeded_users = await seed_users(session)
+            if seeded_users:
+                logger.info("Seeded %s users", seeded_users)
     except (OSError, SQLAlchemyError):
         logger.exception("Database initialization failed; API started without seeding")
     yield

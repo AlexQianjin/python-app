@@ -3,6 +3,7 @@ import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 import { AppLayout } from './AppLayout'
 import { DashboardPage } from '../features/dashboard'
 import { ProductsPage } from '../features/products'
+import { UsersPage } from '../features/users'
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -25,7 +26,13 @@ const productsRoute = createRoute({
   component: ProductsPage,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, productsRoute])
+const usersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/users',
+  component: UsersPage,
+})
+
+const routeTree = rootRoute.addChildren([indexRoute, productsRoute, usersRoute])
 
 export const router = createRouter({ routeTree })
 

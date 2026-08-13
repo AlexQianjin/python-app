@@ -1,4 +1,5 @@
 import { Link, Outlet } from '@tanstack/react-router'
+import { LayoutDashboard, Package, UsersRound } from 'lucide-react'
 import { AuthPage, authClient, clearApiToken } from '../features/auth'
 
 export function AppLayout() {
@@ -46,15 +47,21 @@ export function AppLayout() {
         <nav aria-label="Main navigation">
           <Link to="/" activeOptions={{ exact: true }} activeProps={{ className: 'active' }}>
             <span className="nav-icon" aria-hidden="true">
-              ⌂
+              <LayoutDashboard size={19} strokeWidth={1.8} />
             </span>{' '}
             Dashboard
           </Link>
           <Link to="/products" activeProps={{ className: 'active' }}>
             <span className="nav-icon" aria-hidden="true">
-              □
+              <Package size={19} strokeWidth={1.8} />
             </span>{' '}
             Products
+          </Link>
+          <Link to="/users" activeProps={{ className: 'active' }}>
+            <span className="nav-icon" aria-hidden="true">
+              <UsersRound size={19} strokeWidth={1.8} />
+            </span>{' '}
+            Users
           </Link>
         </nav>
         <div className="sidebar-footer">
@@ -84,6 +91,9 @@ export function AppLayout() {
             </Link>
             <Link to="/products" activeProps={{ className: 'active' }}>
               Products
+            </Link>
+            <Link to="/users" activeProps={{ className: 'active' }}>
+              Users
             </Link>
             <button className="mobile-sign-out" type="button" onClick={signOut}>
               Sign out

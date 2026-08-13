@@ -9,6 +9,7 @@ from alembic import context
 from app.core.config import settings
 from app.db.base import Base
 from app.modules.products.models import Product  # noqa: F401
+from app.modules.users.models import User  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))

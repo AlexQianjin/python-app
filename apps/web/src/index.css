@@ -65,7 +65,8 @@ body {
 }
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 button {
@@ -528,7 +529,8 @@ h2 {
   font-weight: 700;
 }
 .form-grid input:not([type='checkbox']),
-.form-grid textarea {
+.form-grid textarea,
+.form-grid select {
   width: 100%;
   border: 1px solid #d8dee7;
   border-radius: 8px;
@@ -539,7 +541,8 @@ h2 {
   font-weight: 400;
 }
 .form-grid input:focus,
-.form-grid textarea:focus {
+.form-grid textarea:focus,
+.form-grid select:focus {
   border-color: #6d86e9;
   box-shadow: 0 0 0 3px rgb(53 89 224 / 10%);
 }
@@ -554,6 +557,49 @@ h2 {
   width: 17px;
   height: 17px;
   accent-color: #3559e0;
+}
+
+.user-table .table-grid {
+  grid-template-columns: minmax(300px, 2fr) 130px 130px 150px 150px;
+}
+.managed-user-cell {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.managed-user-avatar {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #3157d5;
+  background: #edf1ff;
+  font-size: 11px;
+  font-weight: 800;
+}
+.managed-user-cell > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.managed-user-cell strong,
+.managed-user-cell span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.managed-user-cell strong {
+  color: #202b3c;
+}
+.managed-user-cell span {
+  color: #7b8696;
+  font-size: 12px;
+}
+.role-label {
+  text-transform: capitalize;
 }
 .form-error {
   margin: 17px 0 0;

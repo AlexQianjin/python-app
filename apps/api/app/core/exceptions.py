@@ -17,6 +17,16 @@ class DuplicateSKUError(ApplicationError):
     detail = "SKU already exists"
 
 
+class UserNotFoundError(ApplicationError):
+    status_code = 404
+    detail = "User not found"
+
+
+class DuplicateEmailError(ApplicationError):
+    status_code = 409
+    detail = "Email already exists"
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(ApplicationError)
     async def handle_application_error(

@@ -44,12 +44,13 @@ The web app is available at <http://localhost:5173>. The API is available at
 
 Open the web app and create an account with email and password. Better Auth keeps
 the browser session in a secure cookie and issues short-lived JWTs for calls to
-FastAPI. All product routes require a valid authenticated user; health endpoints
+FastAPI. All product and user routes require a valid authenticated user; health endpoints
 remain public.
 
-The Alembic migration creates the API database tables. On the first API startup,
-an empty catalog is seeded with 1,000 deterministic mock products. The Products
-screen loads 100 products per page and virtualizes the visible table rows.
+The Alembic migrations create the API database tables. On the first API startup,
+an empty catalog is seeded with 1,000 deterministic mock products and an empty
+user directory with 200 deterministic mock users. The Products screen loads 100
+products per page, while the Users screen loads 20 users per page.
 
 After changing a SQLAlchemy model, create and apply a migration from `apps/api`:
 
@@ -70,6 +71,14 @@ Product CRUD endpoints are available at `/api/products`:
 - `POST /api/products`
 - `PUT /api/products/{id}`
 - `DELETE /api/products/{id}`
+
+User CRUD endpoints are available at `/api/users`:
+
+- `GET /api/users?page=1&page_size=20&search=`
+- `GET /api/users/{id}`
+- `POST /api/users`
+- `PUT /api/users/{id}`
+- `DELETE /api/users/{id}`
 
 You can also run either app independently:
 
