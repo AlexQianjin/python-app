@@ -3,7 +3,7 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Product
+from app.modules.products.models import Product
 
 CATEGORIES = (
     "Electronics",
