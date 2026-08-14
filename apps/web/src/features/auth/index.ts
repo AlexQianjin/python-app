@@ -1,2 +1,5 @@
 export { AuthPage } from './components/AuthPage'
+export { AuthSessionProvider } from './components/AuthSessionProvider'
+export { useAuthSession } from './hooks/useAuthSession'
+export { SignInPage } from './pages/SignInPage'
 export { authClient, clearApiToken, getApiToken } from './api/auth-client'

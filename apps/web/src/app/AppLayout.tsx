@@ -1,9 +1,33 @@
-import { Link, Outlet } from '@tanstack/react-router'
+import { useEffect, useRef } from 'react'
+import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { LayoutDashboard, Package, UsersRound } from 'lucide-react'
-import { AuthPage, authClient, clearApiToken } from '../features/auth'
+import { authClient, clearApiToken, useAuthSession } from '../features/auth'
+
+async function signOut() {
+  await authClient.signOut()
+  clearApiToken()
+}
 
 export function AppLayout() {
-  const { data: session, isPending, error, refetch } = authClient.useSession()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { data: session, isPending, error } = useAuthSession()
+  const isRedirecting = useRef(false)
+
+  useEffect(() => {
+    if (!isPending && !session && !isRedirecting.current) {
+      isRedirecting.current = true
+      void navigate({
+        to: '/signin',
+        search: { redirect: location.href === '/' ? undefined : location.href },
+        replace: true,
+      })
+    }
+
+    if (session) {
+      isRedirecting.current = false
+    }
+  }, [isPending, location.href, navigate, session])
 
   if (isPending) {
     return (
@@ -15,10 +39,9 @@ export function AppLayout() {
 
   if (!session) {
     return (
-      <>
-        {error && <div className="toast">{error.message}</div>}
-        <AuthPage onAuthenticated={refetch} />
-      </>
+      <main className="auth-page">
+        <div className="auth-loading">Redirecting to sign in…</div>
+      </main>
     )
   }
 
@@ -29,14 +52,9 @@ export function AppLayout() {
     .slice(0, 2)
     .toUpperCase()
 
-  async function signOut() {
-    await authClient.signOut()
-    clearApiToken()
-    await refetch()
-  }
-
   return (
     <div className="app-frame">
+      {error && <div className="toast">{error.message}</div>}
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-mark" aria-hidden="true">

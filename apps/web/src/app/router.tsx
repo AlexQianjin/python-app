@@ -1,6 +1,7 @@
-import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
+import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router'
 import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 import { AppLayout } from './AppLayout'
+import { AuthSessionProvider, SignInPage } from '../features/auth'
 import { DashboardPage } from '../features/dashboard'
 import { ProductsPage } from '../features/products'
 import { UsersPage } from '../features/users'
@@ -8,31 +9,51 @@ import { UsersPage } from '../features/users'
 const rootRoute = createRootRoute({
   component: () => (
     <NuqsAdapter>
-      <AppLayout />
+      <AuthSessionProvider>
+        <Outlet />
+      </AuthSessionProvider>
     </NuqsAdapter>
   ),
   notFoundComponent: () => <main>Page not found</main>,
 })
 
-const indexRoute = createRoute({
+const authenticatedRoute = createRoute({
   getParentRoute: () => rootRoute,
+  id: 'authenticated',
+  component: AppLayout,
+})
+
+const indexRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
   path: '/',
   component: DashboardPage,
 })
 
 const productsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedRoute,
   path: '/products',
   component: ProductsPage,
 })
 
 const usersRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedRoute,
   path: '/users',
   component: UsersPage,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, productsRoute, usersRoute])
+const signInRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/signin',
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === 'string' ? search.redirect : undefined,
+  }),
+  component: SignInPage,
+})
+
+const routeTree = rootRoute.addChildren([
+  signInRoute,
+  authenticatedRoute.addChildren([indexRoute, productsRoute, usersRoute]),
+])
 
 export const router = createRouter({ routeTree })
 
