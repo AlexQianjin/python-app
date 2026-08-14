@@ -1,13 +1,14 @@
 # React + FastAPI monorepo
 
 A pnpm workspace containing a Vite React web app and a uv-managed FastAPI API,
-backed by PostgreSQL.
+backed by PostgreSQL and Redis.
 
 ## Stack
 
 - `apps/web`: React, TypeScript, Vite
 - `apps/api`: Python 3.12, FastAPI, SQLAlchemy, asyncpg, uv
 - PostgreSQL 17 via Docker Compose
+- Redis 8 for product read caching
 - pnpm workspace orchestration
 
 ## Prerequisites
@@ -22,7 +23,7 @@ backed by PostgreSQL.
 ```sh
 pnpm install
 cp apps/api/.env.example apps/api/.env
-docker compose up -d postgres
+docker compose up -d postgres redis
 cd apps/api && python3 -m uv sync && python3 -m uv run alembic upgrade head && cd ../..
 ```
 
@@ -71,6 +72,10 @@ Product CRUD endpoints are available at `/api/products`:
 - `POST /api/products`
 - `PUT /api/products/{id}`
 - `DELETE /api/products/{id}`
+
+Product lists, individual product reads, and the product summary use Redis with
+a configurable TTL. Successful product writes invalidate all product cache
+entries. If Redis is unavailable, requests fall back to PostgreSQL.
 
 User CRUD endpoints are available at `/api/users`:
 

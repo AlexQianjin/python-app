@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.router import router as api_router
+from app.core.cache import redis_cache
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
@@ -29,7 +30,10 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
                 logger.info("Seeded %s users", seeded_users)
     except (OSError, SQLAlchemyError):
         logger.exception("Database initialization failed; API started without seeding")
-    yield
+    try:
+        yield
+    finally:
+        await redis_cache.close()
 
 
 def create_app() -> FastAPI:

@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +12,8 @@ class Settings(BaseSettings):
     auth_jwks_url: str = "http://localhost:8001/api/auth/jwks"
     auth_issuer: str = "http://localhost:5173"
     auth_audience: str = "http://localhost:5173"
+    redis_url: str | None = None
+    product_cache_ttl_seconds: int = Field(default=300, ge=1)
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
