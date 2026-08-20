@@ -5,6 +5,7 @@ import { AuthSessionProvider, SignInPage } from '../features/auth'
 import { DashboardPage } from '../features/dashboard'
 import { ProductsPage } from '../features/products'
 import { UsersPage } from '../features/users'
+import { OrdersPage } from '../features/orders'
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -41,6 +42,12 @@ const usersRoute = createRoute({
   component: UsersPage,
 })
 
+const ordersRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/orders',
+  component: OrdersPage,
+})
+
 const signInRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/signin',
@@ -52,7 +59,7 @@ const signInRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   signInRoute,
-  authenticatedRoute.addChildren([indexRoute, productsRoute, usersRoute]),
+  authenticatedRoute.addChildren([indexRoute, productsRoute, ordersRoute, usersRoute]),
 ])
 
 export const router = createRouter({ routeTree })

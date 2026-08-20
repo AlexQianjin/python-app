@@ -27,6 +27,31 @@ class DuplicateEmailError(ApplicationError):
     detail = "Email already exists"
 
 
+class CartItemNotFoundError(ApplicationError):
+    status_code = 404
+    detail = "Cart item not found"
+
+
+class OrderNotFoundError(ApplicationError):
+    status_code = 404
+    detail = "Order not found"
+
+
+class ProductUnavailableError(ApplicationError):
+    status_code = 409
+    detail = "A product is no longer available"
+
+
+class InsufficientStockError(ApplicationError):
+    status_code = 409
+    detail = "Requested quantity exceeds available stock"
+
+
+class CartEmptyError(ApplicationError):
+    status_code = 409
+    detail = "Your cart is empty"
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(ApplicationError)
     async def handle_application_error(

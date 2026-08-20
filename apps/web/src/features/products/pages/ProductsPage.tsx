@@ -11,6 +11,7 @@ import {
 } from '../api/products-api'
 import { ProductForm } from '../components/ProductForm'
 import { ProductTable } from '../components/ProductTable'
+import { addToCart } from '../../orders'
 
 export function ProductsPage() {
   const queryClient = useQueryClient()
@@ -55,6 +56,11 @@ export function ProductsPage() {
         queryClient.invalidateQueries({ queryKey: ['product-summary'] }),
       ])
     },
+  })
+
+  const cartMutation = useMutation({
+    mutationFn: (product: Product) => addToCart(product.id),
+    onSuccess: async () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
   })
 
   const openCreate = () => {
@@ -128,7 +134,12 @@ export function ProductsPage() {
         ) : data.items.length === 0 ? (
           <div className="state-panel">No products match your search.</div>
         ) : (
-          <ProductTable products={data.items} onEdit={openEdit} onDelete={remove} />
+          <ProductTable
+            products={data.items}
+            onEdit={openEdit}
+            onDelete={remove}
+            onAddToCart={(product) => cartMutation.mutate(product)}
+          />
         )}
 
         <footer className="pagination">
@@ -158,6 +169,16 @@ export function ProductsPage() {
       {deleteMutation.isError && (
         <div className="toast" role="alert">
           {deleteMutation.error.message}
+        </div>
+      )}
+      {cartMutation.isError && (
+        <div className="toast" role="alert">
+          {cartMutation.error.message}
+        </div>
+      )}
+      {cartMutation.isSuccess && (
+        <div className="toast success-toast" role="status">
+          Product added to your cart.
         </div>
       )}
       {formOpen && (

@@ -37,7 +37,7 @@ export type ProductSummary = {
   recently_updated: Product[]
 }
 
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
+export async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const token = await getApiToken()
   const response = await fetch(url, {
     ...init,

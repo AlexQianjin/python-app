@@ -85,6 +85,20 @@ User CRUD endpoints are available at `/api/users`:
 - `PUT /api/users/{id}`
 - `DELETE /api/users/{id}`
 
+Authenticated shopping endpoints keep each user's cart and order history separate:
+
+- `GET /api/cart`
+- `POST /api/cart/items`
+- `PUT /api/cart/items/{item_id}`
+- `DELETE /api/cart/items/{item_id}`
+- `DELETE /api/cart`
+- `POST /api/orders` (checkout the current cart)
+- `GET /api/orders?page=1&page_size=20`
+- `GET /api/orders/{id}`
+
+Checkout validates current availability, decrements stock, saves price and product
+snapshots on the order, and clears the cart in one database transaction.
+
 You can also run either app independently:
 
 ```sh

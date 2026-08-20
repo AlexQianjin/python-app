@@ -10,9 +10,10 @@ type ProductTableProps = {
   products: Product[]
   onEdit: (product: Product) => void
   onDelete: (product: Product) => void
+  onAddToCart: (product: Product) => void
 }
 
-export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) {
+export function ProductTable({ products, onEdit, onDelete, onAddToCart }: ProductTableProps) {
   const columns = useMemo(
     () =>
       columnHelper.columns([
@@ -50,6 +51,14 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
           header: 'Actions',
           cell: (info) => (
             <div className="row-actions">
+              <button
+                className="cart-link"
+                type="button"
+                disabled={!info.row.original.is_active || info.row.original.stock === 0}
+                onClick={() => onAddToCart(info.row.original)}
+              >
+                Add to cart
+              </button>
               <button type="button" onClick={() => onEdit(info.row.original)}>
                 Edit
               </button>
@@ -64,7 +73,7 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
           ),
         }),
       ]),
-    [onDelete, onEdit],
+    [onAddToCart, onDelete, onEdit],
   )
 
   const table = useTable({ features, columns, data: products })
