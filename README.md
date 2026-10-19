@@ -9,6 +9,7 @@ backed by PostgreSQL and Redis.
 - `apps/api`: Python 3.12, FastAPI, SQLAlchemy, asyncpg, uv
 - PostgreSQL 17 via Docker Compose
 - Redis 8 for product read caching
+- Qdrant for multilingual hybrid document search
 - pnpm workspace orchestration
 
 ## Prerequisites
@@ -23,8 +24,8 @@ backed by PostgreSQL and Redis.
 ```sh
 pnpm install
 cp apps/api/.env.example apps/api/.env
-docker compose up -d postgres redis
-cd apps/api && python3 -m uv sync && python3 -m uv run alembic upgrade head && cd ../..
+docker compose up -d postgres redis qdrant
+cd apps/api && uv sync && uv run alembic upgrade head && cd ../..
 ```
 
 Set a private Better Auth secret in `apps/api/.env` (at least 32 characters).
@@ -62,7 +63,7 @@ pnpm db:migrate
 
 If an older development database already has the `products` table from the
 previous automatic setup, baseline it once with
-`python3 -m uv run alembic stamp 20260813_01` instead of applying the initial
+`uv run alembic stamp 20260813_01` instead of applying the initial
 migration.
 
 Product CRUD endpoints are available at `/api/products`:
@@ -113,3 +114,38 @@ pnpm build
 pnpm lint
 pnpm test
 ```
+
+## AI Chat
+
+The AI Chat page supports PDF, DOCX, TXT, and Markdown uploads (20 MB per file),
+document-grounded answers with source links, and streamed progress. Uploads are
+saved under `apps/api/data/uploads` in development. The API queues each file in
+PostgreSQL, and the worker indexes it in Qdrant using the open-source BGE-M3
+model for dense and learned sparse retrieval, plus Qdrant's BM25 for keyword
+retrieval. Hybrid search fuses all three rankings with reciprocal rank fusion.
+The first indexing run downloads BGE-M3 and may take some time.
+
+Set `AI_MODEL_API_KEY` and `AI_MODEL` in `apps/api/.env` for a chat model. An
+OpenAI-compatible endpoint can be selected with `AI_MODEL_BASE_URL`. Set
+`AI_MEMORY_ENABLED=true` to enable Mem0 user memory. The worker starts with
+`pnpm dev`; when running FastAPI alone, start it separately with
+`pnpm --filter api start:worker`. Apply the latest Alembic migration before use.
+
+Uploaded documents stay private to the authenticated user. Document originals,
+Qdrant data, and PostgreSQL data all need durable volumes and backups in a
+production deployment. The local `apps/api/data/uploads` directory is ignored
+by Git.
+
+To compare retrieval methods on your indexed files, create a JSONL file with
+one case per line, for example:
+
+```json
+{"user_id":"user-id","query":"What is the return policy?","document_ids":["document-id"],"relevant_document_ids":["document-id"]}
+```
+
+Run `cd apps/api && uv run python -m app.modules.ai.evaluate cases.jsonl`.
+It reports recall, reciprocal rank, and mean latency for dense, learned sparse,
+BM25, and hybrid search. Use real labeled questions before changing fusion or
+reranking. Upgrading an existing installation to this version queues ready
+documents for reindexing in the new `ai_documents_v2` collection after the
+database migration; wait for the worker to mark them ready again before search.

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
-import { ClipboardList, LayoutDashboard, Package, UsersRound } from 'lucide-react'
+import { ClipboardList, LayoutDashboard, Package, Sparkles, UsersRound } from 'lucide-react'
 import { authClient, clearApiToken, useAuthSession } from '../features/auth'
 
 async function signOut() {
@@ -87,6 +87,12 @@ export function AppLayout() {
             </span>{' '}
             Cart & orders
           </Link>
+          <Link to="/ai" activeProps={{ className: 'active' }}>
+            <span className="nav-icon" aria-hidden="true">
+              <Sparkles size={19} strokeWidth={1.8} />
+            </span>{' '}
+            AI Chat
+          </Link>
         </nav>
         <div className="sidebar-footer">
           <span className="user-avatar" aria-hidden="true">
@@ -121,6 +127,9 @@ export function AppLayout() {
             </Link>
             <Link to="/orders" activeProps={{ className: 'active' }}>
               Cart & orders
+            </Link>
+            <Link to="/ai" activeProps={{ className: 'active' }}>
+              AI Chat
             </Link>
             <button className="mobile-sign-out" type="button" onClick={signOut}>
               Sign out

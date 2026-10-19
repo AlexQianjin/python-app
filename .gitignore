@@ -225,6 +225,7 @@ node_modules/
 
 # Local tool caches and environments
 .uv-cache/
+apps/api/data/
 .venv/
 .env.*
 !.env.example

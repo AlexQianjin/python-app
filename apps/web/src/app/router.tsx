@@ -6,6 +6,7 @@ import { DashboardPage } from '../features/dashboard'
 import { ProductsPage } from '../features/products'
 import { UsersPage } from '../features/users'
 import { OrdersPage } from '../features/orders'
+import { AiPage } from '../features/ai'
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -48,6 +49,12 @@ const ordersRoute = createRoute({
   component: OrdersPage,
 })
 
+const aiRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/ai',
+  component: AiPage,
+})
+
 const signInRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/signin',
@@ -59,7 +66,7 @@ const signInRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   signInRoute,
-  authenticatedRoute.addChildren([indexRoute, productsRoute, ordersRoute, usersRoute]),
+  authenticatedRoute.addChildren([indexRoute, productsRoute, ordersRoute, usersRoute, aiRoute]),
 ])
 
 export const router = createRouter({ routeTree })
