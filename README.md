@@ -7,7 +7,7 @@ backed by PostgreSQL and Redis.
 
 - `apps/web`: React, TypeScript, Vite
 - `apps/api`: Python 3.12, FastAPI, SQLAlchemy, asyncpg, uv
-- PostgreSQL 17 via Docker Compose
+- PostgreSQL hosted by Supabase
 - Redis 8 for product read caching
 - Qdrant for multilingual hybrid document search
 - pnpm workspace orchestration
@@ -24,13 +24,63 @@ backed by PostgreSQL and Redis.
 ```sh
 pnpm install
 cp apps/api/.env.example apps/api/.env
-docker compose up -d postgres redis qdrant
+docker compose up -d redis qdrant
+# Set DATABASE_URL in apps/api/.env before running migrations.
 cd apps/api && uv sync && uv run alembic upgrade head && cd ../..
 ```
 
 Set a private Better Auth secret in `apps/api/.env` (at least 32 characters).
 The API app starts both FastAPI and the Better Auth gateway, and automatically
 creates the Better Auth tables in the existing PostgreSQL database.
+
+## Supabase database
+
+Copy the **Session pooler** URI (port 5432) from the Supabase project's Connect
+panel into `DATABASE_URL` in `apps/api/.env`, and append `?sslmode=require`.
+Use the database password, with reserved characters percent-encoded. A direct
+connection also works if your network supports the project's IP address family.
+Avoid the transaction pooler (port 6543) for this setup.
+
+Leave `AUTH_DATABASE_URL` empty (or remove it) so Better Auth uses the same
+database. Remove any old localhost override. FastAPI, Alembic, Better Auth, and
+AI chat checkpoints all use this database. Keep credentials out of Git.
+Better Auth remains the application's authentication provider.
+
+For a fresh database, run the setup migrations above and start the app; Better
+Auth creates its own tables at startup. Use a dedicated Supabase project for
+this app. Tables are backend-only: disable the Supabase Data API if unused, or
+restrict its exposed schemas and table access before storing application data.
+
+To preserve existing Docker data, stop the API, authentication server, and worker
+before exporting. Keep the existing container and volume until the migration is
+verified. Export only the app's `public` schema, including Better Auth and AI
+checkpoint tables, and restore it into an empty destination `public` schema with
+PostgreSQL tools of the same or newer major version as the source:
+
+```sh
+# Save the backup outside Git; it contains private application data.
+docker compose exec -T postgres pg_dump -U postgres -d app \
+  --schema=public --format=custom --no-owner --no-acl > /tmp/app-postgres.dump
+# Set PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD and PGSSLMODE=require
+# from the Supabase Session pooler URI in your shell (do not commit them).
+# Supabase already owns public; exclude its schema creation/comment entries.
+pg_restore --list /tmp/app-postgres.dump > /tmp/app-postgres.list
+# Edit the list to remove the SCHEMA - public and COMMENT - SCHEMA public lines.
+pg_restore --use-list=/tmp/app-postgres.list --no-owner --no-acl \
+  --exit-on-error --single-transaction --dbname=postgres /tmp/app-postgres.dump
+cd apps/api && uv run alembic upgrade head
+```
+
+Do not apply Alembic migrations to an empty target before restoring this full
+backup: it already includes the schema and Alembic version. Check source/target
+row counts and verify login, products, orders, and chat before switching traffic.
+Redis caches may contain old database results; clear the product cache or use a
+new Redis database index at cutover. Upload files and Qdrant remain on their
+existing storage. Protect and delete the temporary backup when no longer needed.
+
+The old PostgreSQL service is retained behind the `local-db` profile for rollback
+or local development (`docker compose --profile local-db up -d postgres`).
+Its existing volume is preserved; the default Compose startup runs Redis and Qdrant.
 
 ## Development
 

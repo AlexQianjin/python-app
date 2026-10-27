@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from app.core.config import settings
 from app.db.base import Base
+from app.db.urls import async_database_url
 from app.modules.ai.models import (  # noqa: F401
     Conversation,
     Document,
@@ -19,7 +20,12 @@ from app.modules.products.models import Product  # noqa: F401
 from app.modules.users.models import User  # noqa: F401
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
+config.set_main_option(
+    "sqlalchemy.url",
+    async_database_url(settings.database_url)
+    .render_as_string(hide_password=False)
+    .replace("%", "%%"),
+)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

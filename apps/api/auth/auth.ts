@@ -8,8 +8,8 @@ if (!secret || secret.length < 32) {
 }
 
 const baseURL = process.env.BETTER_AUTH_URL ?? 'http://localhost:5173'
-const databaseURL = process.env.AUTH_DATABASE_URL
-  ?? process.env.DATABASE_URL?.replace('postgresql+asyncpg://', 'postgresql://')
+const databaseURL = (process.env.AUTH_DATABASE_URL || process.env.DATABASE_URL)
+  ?.replace('postgresql+asyncpg://', 'postgresql://')
   ?? 'postgresql://postgres:postgres@localhost:5432/app'
 
 export const pool = new Pool({ connectionString: databaseURL })

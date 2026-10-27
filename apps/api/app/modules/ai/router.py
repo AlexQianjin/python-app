@@ -14,6 +14,7 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.db.session import async_session_factory
+from app.db.urls import postgres_url
 from app.dependencies.auth import AuthenticatedUser
 from app.dependencies.database import DatabaseSession
 from app.modules.ai.agent import build_graph
@@ -189,7 +190,7 @@ async def remove_conversation(
 ) -> Response:
     conversation = await owned_conversation(session, user.id, conversation_id)
     if conversation.messages:
-        uri = settings.database_url.replace("postgresql+asyncpg://", "postgresql://", 1)
+        uri = postgres_url(settings.database_url)
         async with AsyncPostgresSaver.from_conn_string(uri) as checkpointer:
             await checkpointer.setup()
             await checkpointer.adelete_thread(conversation_id)
@@ -245,9 +246,7 @@ async def stream_message(
             {"conversation_id": conversation_id, "message_id": user_message.id},
         )
         try:
-            uri = settings.database_url.replace(
-                "postgresql+asyncpg://", "postgresql://", 1
-            )
+            uri = postgres_url(settings.database_url)
             async with AsyncPostgresSaver.from_conn_string(uri) as checkpointer:
                 await checkpointer.setup()
                 graph = build_graph(checkpointer)
