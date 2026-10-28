@@ -1,0 +1,2 @@
+curl {{$dotenv AI_MODEL_BASE_URL}}/models \
+  -H "Authorization: Bearer {{$dotenv AI_MODEL_API_KEY}}"

@@ -170,10 +170,36 @@ pnpm test
 The AI Chat page supports PDF, DOCX, TXT, and Markdown uploads (20 MB per file),
 document-grounded answers with source links, and streamed progress. Uploads are
 saved under `apps/api/data/uploads` in development. The API queues each file in
-PostgreSQL, and the worker indexes it in Qdrant using the open-source BGE-M3
-model for dense and learned sparse retrieval, plus Qdrant's BM25 for keyword
-retrieval. Hybrid search fuses all three rankings with reciprocal rank fusion.
-The first indexing run downloads BGE-M3 and may take some time.
+PostgreSQL, and the worker indexes it in Qdrant using OpenAI
+`text-embedding-3-small` (1024 dimensions) for dense retrieval and Qdrant BM25
+for keyword retrieval. Hybrid search fuses both rankings. The sparse evaluation
+mode uses BM25 when OpenAI is selected; no local embedding model is loaded.
+
+In `apps/api/.env`, set `AI_EMBEDDING_PROVIDER=openai` (the default).
+Set `AI_EMBEDDING_API_KEY`; it falls back to `AI_MODEL_API_KEY` or the exported
+`OPENAI_API_KEY`. Embeddings use the official OpenAI endpoint independently of
+the chat endpoint; override `AI_EMBEDDING_BASE_URL` if needed.
+`AI_OPENAI_EMBEDDING_MODEL` defaults to `text-embedding-3-small`.
+The integration follows the [OpenAI embeddings API](https://developers.openai.com/api/reference/python/resources/embeddings/methods/create).
+Document chunks and search queries are sent to the configured embedding endpoint.
+Requests send arrays of text strings with float output, including for OpenAI-compatible
+providers such as Alibaba Cloud Qwen. For Qwen, set
+`AI_OPENAI_EMBEDDING_MODEL=text-embedding-v4`,
+`AI_EMBEDDING_BASE_URL` to your regional compatible-mode base URL (ending in
+`/compatible-mode/v1`), and `AI_EMBEDDING_API_KEY` to that region's API key.
+The client sends at most eight texts per request and requests 1024 dimensions.
+After fixing embedding configuration, retry failed uploads from the document list.
+
+The original BGE-M3 implementation is retained: select
+`AI_EMBEDDING_PROVIDER=local`, `AI_EMBEDDING_MODEL=BAAI/bge-m3`, and
+`AI_DOCUMENT_COLLECTION=ai_documents_v2` to use dense, learned sparse, and BM25
+retrieval locally. Its first run downloads BGE-M3.
+OpenAI uses `AI_DOCUMENT_COLLECTION=ai_documents_openai_v1` to avoid mixing
+incompatible vectors. Apply `uv run alembic upgrade head` from `apps/api` to
+queue existing ready documents for reindexing, then run the worker.
+When changing embedding providers or models later, use a separate collection and
+reindex documents before searching them. Mem0 also uses a separate OpenAI memory
+collection; old local memories are preserved but are not automatically migrated.
 
 Set `AI_MODEL_API_KEY` and `AI_MODEL` in `apps/api/.env` for a chat model. An
 OpenAI-compatible endpoint can be selected with `AI_MODEL_BASE_URL`. Set
@@ -194,8 +220,6 @@ one case per line, for example:
 ```
 
 Run `cd apps/api && uv run python -m app.modules.ai.evaluate cases.jsonl`.
-It reports recall, reciprocal rank, and mean latency for dense, learned sparse,
+It reports recall, reciprocal rank, and mean latency for dense, sparse,
 BM25, and hybrid search. Use real labeled questions before changing fusion or
-reranking. Upgrading an existing installation to this version queues ready
-documents for reindexing in the new `ai_documents_v2` collection after the
-database migration; wait for the worker to mark them ready again before search.
+reranking.

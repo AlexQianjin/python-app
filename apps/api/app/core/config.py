@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -16,9 +17,13 @@ class Settings(BaseSettings):
     product_cache_ttl_seconds: int = Field(default=300, ge=1)
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str | None = None
-    ai_document_collection: str = "ai_documents_v2"
+    ai_document_collection: str = "ai_documents_openai_v1"
     ai_storage_path: str = "./data/uploads"
     ai_max_upload_bytes: int = Field(default=20_000_000, ge=1)
+    ai_embedding_provider: Literal["openai", "local"] = "openai"
+    ai_openai_embedding_model: str = "text-embedding-3-small"
+    ai_embedding_api_key: str | None = None
+    ai_embedding_base_url: str = "https://api.openai.com/v1"
     ai_embedding_model: str = "BAAI/bge-m3"
     ai_model: str = "gpt-4o-mini"
     ai_model_api_key: str | None = None

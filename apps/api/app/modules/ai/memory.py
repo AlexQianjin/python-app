@@ -22,13 +22,32 @@ def memory_configuration() -> dict:
                 "host": parsed.hostname,
                 "port": parsed.port or 6333,
                 "api_key": settings.qdrant_api_key or None,
-                "collection_name": "ai_memories",
+                "collection_name": (
+                    "ai_memories_openai_v1"
+                    if settings.ai_embedding_provider == "openai"
+                    else "ai_memories"
+                ),
                 "embedding_model_dims": 1024,
             },
         },
         "embedder": {
-            "provider": "huggingface",
-            "config": {"model": settings.ai_embedding_model},
+            "provider": (
+                "openai"
+                if settings.ai_embedding_provider == "openai"
+                else "huggingface"
+            ),
+            "config": (
+                {
+                    "model": settings.ai_openai_embedding_model,
+                    "embedding_dims": 1024,
+                    "api_key": settings.ai_embedding_api_key
+                    or settings.ai_model_api_key
+                    or os.environ.get("OPENAI_API_KEY"),
+                    "openai_base_url": settings.ai_embedding_base_url,
+                }
+                if settings.ai_embedding_provider == "openai"
+                else {"model": settings.ai_embedding_model}
+            ),
         },
         "llm": {
             "provider": "openai",

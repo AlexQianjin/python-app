@@ -1,8 +1,10 @@
 import asyncio
+import os
 from functools import lru_cache
 from typing import Literal
 from uuid import NAMESPACE_URL, uuid5
 
+from langchain_openai import OpenAIEmbeddings
 from qdrant_client import AsyncQdrantClient, models
 
 from app.core.config import settings
@@ -18,7 +20,41 @@ def embedding_model():
     return BGEM3FlagModel(settings.ai_embedding_model, use_fp16=False)
 
 
+def openai_embedding_model() -> OpenAIEmbeddings:
+    key = (
+        settings.ai_embedding_api_key
+        or settings.ai_model_api_key
+        or os.environ.get("OPENAI_API_KEY")
+    )
+    if not key:
+        raise RuntimeError("Set AI_EMBEDDING_API_KEY or OPENAI_API_KEY for embeddings")
+    return OpenAIEmbeddings(
+        model=settings.ai_openai_embedding_model,
+        dimensions=VECTOR_SIZE,
+        api_key=key,
+        base_url=settings.ai_embedding_base_url,
+        # Compatible providers such as Qwen require strings, not OpenAI token IDs.
+        check_embedding_ctx_length=False,
+        chunk_size=8,
+        model_kwargs={"encoding_format": "float"},
+    )
+
+
 async def encode(texts: list[str]) -> list[tuple[list[float], models.SparseVector]]:
+    if not texts:
+        return []
+    if settings.ai_embedding_provider == "openai":
+        dense_vectors = await openai_embedding_model().aembed_documents(texts)
+        return [
+            (dense, models.SparseVector(indices=[], values=[]))
+            for dense in dense_vectors
+        ]
+    return await encode_local(texts)
+
+
+async def encode_local(
+    texts: list[str],
+) -> list[tuple[list[float], models.SparseVector]]:
     def run():
         return embedding_model().encode(
             texts,
@@ -145,6 +181,9 @@ async def search_documents(
     try:
         if not await qdrant.collection_exists(settings.ai_document_collection):
             return []
+        # OpenAI provides dense vectors; use BM25 for sparse keyword retrieval.
+        if mode == "sparse" and settings.ai_embedding_provider == "openai":
+            mode = "bm25"
         dense, sparse = (await encode([query]))[0] if mode != "bm25" else (None, None)
         scope = models.Filter(
             must=[
@@ -161,8 +200,14 @@ async def search_documents(
                 collection_name=settings.ai_document_collection,
                 prefetch=[
                     models.Prefetch(query=dense, using="dense", filter=scope, limit=24),
-                    models.Prefetch(
-                        query=sparse, using="sparse", filter=scope, limit=24
+                    *(
+                        [
+                            models.Prefetch(
+                                query=sparse, using="sparse", filter=scope, limit=24
+                            )
+                        ]
+                        if settings.ai_embedding_provider == "local"
+                        else []
                     ),
                     models.Prefetch(
                         query=models.Document(text=query, model="Qdrant/bm25"),
