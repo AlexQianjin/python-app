@@ -223,3 +223,6 @@ Run `cd apps/api && uv run python -m app.modules.ai.evaluate cases.jsonl`.
 It reports recall, reciprocal rank, and mean latency for dense, sparse,
 BM25, and hybrid search. Use real labeled questions before changing fusion or
 reranking.
+
+### AI Chat Screenshots
+![ai-chat](./resource/images/ai-chat-2026-10-28%20at%2017.20.09.png)
