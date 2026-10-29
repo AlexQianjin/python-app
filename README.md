@@ -169,7 +169,15 @@ pnpm test
 
 The AI Chat page supports PDF, DOCX, TXT, and Markdown uploads (20 MB per file),
 document-grounded answers with source links, and streamed progress. Uploads are
-saved under `apps/api/data/uploads` in development. The API queues each file in
+saved under `apps/api/data/uploads` in development. PDF and DOCX text extraction
+uses [Docling](https://docling-project.github.io/docling/), including PDF layout,
+tables, and OCR. PDF page numbers are retained for citations; DOCX uses page 1
+because Word files have no stable rendered page boundaries. TXT and Markdown
+are read directly as UTF-8. Docling runs locally in the worker and downloads its
+PDF/OCR models on first use, which can take time and use significant memory.
+Run `cd apps/api && uv sync` after updating, then restart the API and worker.
+Existing indexed documents retain their previous text until reprocessed.
+The API queues each file in
 PostgreSQL, and the worker indexes it in Qdrant using OpenAI
 `text-embedding-3-small` (1024 dimensions) for dense retrieval and Qdrant BM25
 for keyword retrieval. Hybrid search fuses both rankings. The sparse evaluation
@@ -225,4 +233,8 @@ BM25, and hybrid search. Use real labeled questions before changing fusion or
 reranking.
 
 ### AI Chat Screenshots
+#### Chinese
 ![ai-chat](./resource/images/ai-chat-2026-10-28%20at%2017.20.09.png)
+
+#### English
+![ai-chat-en](./resource/images/ai-chat-en-2026-10-29%20at%2018.00.12.png)

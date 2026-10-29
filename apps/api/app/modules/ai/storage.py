@@ -1,5 +1,7 @@
 import hashlib
 import secrets
+from functools import lru_cache
+from io import BytesIO
 from pathlib import Path
 
 from fastapi import HTTPException, UploadFile, status
@@ -42,20 +44,34 @@ async def save_upload(upload: UploadFile) -> tuple[str, int, str]:
         raise
 
 
+@lru_cache(maxsize=1)
+def document_converter():
+    from docling.datamodel.base_models import InputFormat
+    from docling.document_converter import DocumentConverter
+
+    return DocumentConverter(allowed_formats=[InputFormat.PDF, InputFormat.DOCX])
+
+
 def extract_pages(path: Path, filename: str) -> list[tuple[int, str]]:
     suffix = Path(filename).suffix.lower()
-    if suffix == ".pdf":
-        from pypdf import PdfReader
+    if suffix in {".pdf", ".docx"}:
+        from docling.datamodel.base_models import DocumentStream
 
-        return [
-            (number, page.extract_text() or "")
-            for number, page in enumerate(PdfReader(path).pages, 1)
-        ]
-    if suffix == ".docx":
-        from docx import Document
-
-        document = Document(path)
-        return [(1, "\n".join(p.text for p in document.paragraphs))]
+        # Uploads use extensionless storage keys; retain the original file type.
+        result = document_converter().convert(
+            DocumentStream(name=Path(filename).name, stream=BytesIO(path.read_bytes()))
+        )
+        document = result.document
+        if suffix == ".pdf":
+            return [
+                (
+                    page,
+                    document.export_to_markdown(page_no=page, image_placeholder=""),
+                )
+                for page in sorted(document.pages)
+            ]
+        # Word documents do not have stable rendered page boundaries.
+        return [(1, document.export_to_markdown(image_placeholder=""))]
     return [(1, path.read_text(encoding="utf-8"))]
 
 
