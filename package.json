@@ -2,7 +2,7 @@
   "name": "python-app",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@11.13.0",
+  "packageManager": "pnpm@12.23.0",
   "scripts": {
     "prepare": "husky",
     "dev": "pnpm --parallel --filter web --filter api dev",
